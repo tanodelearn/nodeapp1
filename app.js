@@ -3,17 +3,15 @@ var express = require("express");
 
 // initilize and store the express in a variable
 var app = express();
+var { db,testConnection,createTable } = require("./db");
 
-
-function refAdminCheck(req,res,next) {
-  
-    if (req.params.ref === "admin") {
-      next();  // move to next handler in queue
-     // next('route');// will skip the next handler and move to next matching route
-    } else {
-      res.send("You should be type of admin");
-    }
-  
+function refAdminCheck(req, res, next) {
+  if (req.params.ref === "admin") {
+    next(); // move to next handler in queue
+    // next('route');// will skip the next handler and move to next matching route
+  } else {
+    res.send("You should be type of admin");
+  }
 }
 //attach static resources at root
 //app.use(express.static("public"));
@@ -23,7 +21,7 @@ app.use("/static", express.static("public"));
 //we can use multiple static folders with same virtual prefix
 app.use("/static", express.static("app-resources"));
 
-app.set("view engine","pug");
+app.set("view engine", "pug");
 
 // mounting routes
 app.get("/", (req, res) => {
@@ -108,24 +106,38 @@ app.get("/fetch-payment/:id", (req, res) => {
 
 // example of route level middleware
 
-app.get(
-  "/check-info/:ref",
-  refAdminCheck,
-  (req, res) => {
-    res.send("I am admin");
-  }
-);
+app.get("/check-info/:ref", refAdminCheck, (req, res) => {
+  res.send("I am admin");
+});
 
-app.get(
-  "/check-info/:ref",(req,res)=>{
-    res.send("Delegated request");
+app.get("/check-info/:ref", (req, res) => {
+  res.send("Delegated request");
+});
+
+//example of view engine
+
+app.get("/users", (req, res) => {
+  testConnection(res,'show-users');
+});
+
+app.get('/create-tables',(req,res)=>{
+ createTable();
+ res.end("Created");
+});
+
+app.get('/all-users',(req,res)=> {
+  db.query("select * from noteuser",(err,data)=> {
+    res.render("users",{users:data.rows});
   });
+});
 
-  //example of view engine
+app.get("/user-detail", (req, res) => {
+ 
 
-  app.get("/users",(req,res)=> {
-    res.render("show-users",{name:'Indresh',addr : "Noida"});
-  });
+ db.query("Select now()",(err,data)=> {
+    res.render('show-users',{'name':"Test",addr:"Dehi",date:data.rows[0]});
+ });
+});
 // ordering always matters keep default page after all the routing
 app.get("*", (req, res) => {
   res.send("Wrong page ");
